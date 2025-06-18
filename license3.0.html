@@ -37,11 +37,10 @@
     #plates {
       display: none;
       margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
       gap: 12px;
-      max-width: 90%;
+      max-width: 600px;
       margin-left: auto;
       margin-right: auto;
     }
@@ -91,9 +90,8 @@
     let hasSelected = false;
 
     function generatePlate() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // 去除 O
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
       const digits = "0123456789";
-
       let suffix = "";
       let digitCount = 0;
       while (suffix.length < 5) {
@@ -106,7 +104,6 @@
           suffix += c;
         }
       }
-
       const letter = chars[Math.floor(Math.random() * chars.length)];
       return `京${letter}${suffix}`;
     }
@@ -134,7 +131,7 @@
         div.onclick = () => selectPlate(plate);
         platesDiv.appendChild(div);
       });
-      platesDiv.style.display = "flex";
+      platesDiv.style.display = "grid";
       startCountdown(20);
     }
 
@@ -179,7 +176,6 @@
         const worstScore = worst ? worst.score : -Infinity;
         return score > worstScore ? { plate, score } : worst;
       }, null);
-
       selectPlate(badPlate.plate);
     }
   </script>
