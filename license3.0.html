@@ -31,8 +31,12 @@
       transition: background-color 0.3s ease;
       margin-top: 20px;
     }
-    button:hover {
+    button:hover:not(:disabled) {
       background-color: #388e3c;
+    }
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
     }
     #plates {
       display: none;
@@ -80,6 +84,7 @@
   <div id="intro">准备好了吗？你只有20秒！</div>
   <button id="startBtn" onclick="startSelection()">开始选号</button>
   <div id="timer"></div>
+  <button id="refreshBtn" onclick="refreshPlates()" style="display:none;">刷新号码（-3秒）</button>
   <div id="plates"></div>
   <div id="result"></div>
 
@@ -90,9 +95,11 @@
     const introDiv = document.getElementById("intro");
     const title = document.getElementById("title");
     const startBtn = document.getElementById("startBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
     let plates = [];
     let countdown;
     let hasSelected = false;
+    let timeLeft = 20;
 
     function generatePlate() {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -121,14 +128,8 @@
       }
     }
 
-    function startSelection() {
-      generatePlates();
-      hasSelected = false;
+    function displayPlates() {
       platesDiv.innerHTML = "";
-      resultDiv.innerHTML = "";
-      introDiv.style.display = "none";
-      title.style.display = "none";
-      startBtn.style.display = "none";
       plates.forEach(plate => {
         const div = document.createElement("div");
         div.className = "plate";
@@ -136,54 +137,67 @@
         div.onclick = () => selectPlate(plate);
         platesDiv.appendChild(div);
       });
+    }
+
+    function startSelection() {
+      generatePlates();
+      displayPlates();
+      hasSelected = false;
+      resultDiv.innerHTML = "";
+      introDiv.style.display = "none";
+      title.style.display = "none";
+      startBtn.style.display = "none";
       platesDiv.style.display = "grid";
+      refreshBtn.style.display = "inline-block";
       startCountdown(20);
     }
 
     function startCountdown(seconds) {
-      let timeLeft = seconds;
+      timeLeft = seconds;
       timerDiv.innerText = `倒计时: ${timeLeft}秒`;
       clearInterval(countdown);
       countdown = setInterval(() => {
         timeLeft--;
         timerDiv.innerText = `倒计时: ${timeLeft}秒`;
+        if (timeLeft <= 5) refreshBtn.disabled = true;
         if (timeLeft <= 0) {
           clearInterval(countdown);
           timerDiv.innerText = "时间到！";
           disableSelection();
-          if (!hasSelected) {
-            selectWorstPlate();
-          }
+          if (!hasSelected) selectWorstPlate();
         }
       }, 1000);
+    }
+
+    function refreshPlates() {
+      if (timeLeft <= 5) return;
+      timeLeft -= 3;
+      if (timeLeft < 0) timeLeft = 0;
+      timerDiv.innerText = `倒计时: ${timeLeft}秒`;
+      generatePlates();
+      displayPlates();
+      if (timeLeft <= 5) refreshBtn.disabled = true;
     }
 
     function isGoodPlate(plate) {
       const suffix = plate.slice(2);
       if (suffix.includes("4")) return false;
-    
-      // 连续数字判断
       const hasSequence = [...suffix].some((ch, i, arr) =>
         i > 0 && !isNaN(arr[i]) && !isNaN(arr[i - 1]) &&
         Number(arr[i]) === Number(arr[i - 1]) + 1
       );
-    
-      // 重复数字判断（如00、111）
-      const hasRepeated = /(\d)\1{1,}/.test(suffix);
-    
-      // 至少两个6或8
+      const hasRepeated = /(\\d)\1{1,}/.test(suffix);
       const count6 = (suffix.match(/6/g) || []).length;
       const count8 = (suffix.match(/8/g) || []).length;
-    
       return hasSequence || hasRepeated || (count6 + count8 >= 2);
     }
-
 
     function selectPlate(selected) {
       hasSelected = true;
       clearInterval(countdown);
       platesDiv.style.display = "none";
       timerDiv.style.display = "none";
+      refreshBtn.style.display = "none";
       const goodPlates = plates.filter(p => isGoodPlate(p) && p !== selected);
       resultDiv.innerHTML = `<p>恭喜你选中 <span class='selected-plate'>${selected}</span></p><p>你错过的好号有：${goodPlates.join("、") || '无'}</p><button onclick='location.reload()'>重新开始</button>`;
     }
