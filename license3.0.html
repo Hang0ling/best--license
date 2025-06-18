@@ -65,8 +65,13 @@
     }
     #result {
       margin-top: 30px;
-      font-size: 20px;
+      font-size: 24px;
       color: #2e7d32;
+    }
+    #result .selected-plate {
+      font-size: 36px;
+      font-weight: bold;
+      color: #ef6c00;
     }
   </style>
 </head>
@@ -159,7 +164,7 @@
       platesDiv.style.display = "none";
       timerDiv.style.display = "none";
       const goodPlates = plates.filter(p => /[A-Z][0-9]{3,}[8]{1,}|[A-Z]{1}[8]{1,}[0-9]{3,}/.test(p) && p !== selected);
-      resultDiv.innerHTML = `<p>恭喜你选中 ${selected}</p><p>你错过的好号有：${goodPlates.join("、") || '无'}</p><button onclick='location.reload()'>重新开始</button>`;
+      resultDiv.innerHTML = `<p>恭喜你选中 <span class='selected-plate'>${selected}</span></p><p>你错过的好号有：${goodPlates.join("、") || '无'}</p><button onclick='location.reload()'>重新开始</button>`;
     }
 
     function disableSelection() {
