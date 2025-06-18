@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>北京机动车牌照模拟训练</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #f9fdf9;
+      color: #333;
+    }
+    h1 {
+      color: #2e7d32;
+      font-size: 2.8em;
+    }
+    #intro {
+      margin-bottom: 20px;
+      font-size: 1.6em;
+      color: #ef6c00;
+    }
+    button {
+      background-color: #43a047;
+      color: white;
+      font-size: 18px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #388e3c;
+    }
+    #plates {
+      display: none;
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      max-width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .plate {
+      padding: 12px 16px;
+      border: 2px solid #2e7d32;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      background-color: #e8f5e9;
+      transition: background-color 0.2s ease;
+      white-space: nowrap;
+    }
+    .plate:hover {
+      background-color: #c8e6c9;
+    }
+    #timer {
+      font-size: 22px;
+      margin-top: 20px;
+      color: #d84315;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 20px;
+      color: #2e7d32;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="title">北京机动车牌照模拟训练</h1>
+  <div id="intro">准备好了吗？你只有20秒！</div>
+  <button id="startBtn" onclick="startSelection()">开始选号</button>
+  <div id="timer"></div>
+  <div id="plates"></div>
+  <div id="result"></div>
+
+  <script>
+    const platesDiv = document.getElementById("plates");
+    const timerDiv = document.getElementById("timer");
+    const resultDiv = document.getElementById("result");
+    const introDiv = document.getElementById("intro");
+    const title = document.getElementById("title");
+    const startBtn = document.getElementById("startBtn");
+    let plates = [];
+    let countdown;
+    let hasSelected = false;
+
+    function generatePlate() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // 去除 O
+      const digits = "0123456789";
+
+      let suffix = "";
+      let digitCount = 0;
+      while (suffix.length < 5) {
+        if (Math.random() < 0.6 || digitCount < 3) {
+          const d = digits[Math.floor(Math.random() * digits.length)];
+          suffix += d;
+          digitCount++;
+        } else {
+          const c = chars[Math.floor(Math.random() * chars.length)];
+          suffix += c;
+        }
+      }
+
+      const letter = chars[Math.floor(Math.random() * chars.length)];
+      return `京${letter}${suffix}`;
+    }
+
+    function generatePlates() {
+      plates = [];
+      while (plates.length < 50) {
+        let plate = generatePlate();
+        if (!plates.includes(plate)) plates.push(plate);
+      }
+    }
+
+    function startSelection() {
+      generatePlates();
+      hasSelected = false;
+      platesDiv.innerHTML = "";
+      resultDiv.innerHTML = "";
+      introDiv.style.display = "none";
+      title.style.display = "none";
+      startBtn.style.display = "none";
+      plates.forEach(plate => {
+        const div = document.createElement("div");
+        div.className = "plate";
+        div.innerText = plate;
+        div.onclick = () => selectPlate(plate);
+        platesDiv.appendChild(div);
+      });
+      platesDiv.style.display = "flex";
+      startCountdown(20);
+    }
+
+    function startCountdown(seconds) {
+      let timeLeft = seconds;
+      timerDiv.innerText = `倒计时: ${timeLeft}秒`;
+      clearInterval(countdown);
+      countdown = setInterval(() => {
+        timeLeft--;
+        timerDiv.innerText = `倒计时: ${timeLeft}秒`;
+        if (timeLeft <= 0) {
+          clearInterval(countdown);
+          timerDiv.innerText = "时间到！";
+          disableSelection();
+          if (!hasSelected) {
+            selectWorstPlate();
+          }
+        }
+      }, 1000);
+    }
+
+    function selectPlate(selected) {
+      hasSelected = true;
+      clearInterval(countdown);
+      platesDiv.style.display = "none";
+      timerDiv.style.display = "none";
+      const goodPlates = plates.filter(p => /[A-Z][0-9]{3,}[8]{1,}|[A-Z]{1}[8]{1,}[0-9]{3,}/.test(p) && p !== selected);
+      resultDiv.innerHTML = `<p>恭喜你选中 ${selected}</p><p>你错过的好号有：${goodPlates.join("、") || '无'}</p><button onclick='location.reload()'>重新开始</button>`;
+    }
+
+    function disableSelection() {
+      platesDiv.querySelectorAll(".plate").forEach(p => p.onclick = null);
+    }
+
+    function selectWorstPlate() {
+      const badPlate = plates.reduce((worst, plate) => {
+        const suffix = plate.slice(2);
+        const numCount = (suffix.match(/\d/g) || []).length;
+        const has8 = suffix.includes("8");
+        const letterCount = (suffix.match(/[A-Z]/g) || []).length;
+        const score = letterCount * 2 - numCount + (has8 ? 5 : 0);
+        const worstScore = worst ? worst.score : -Infinity;
+        return score > worstScore ? { plate, score } : worst;
+      }, null);
+
+      selectPlate(badPlate.plate);
+    }
+  </script>
+</body>
+</html>
