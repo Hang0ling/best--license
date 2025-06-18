@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>车牌选号</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    #plates { display: none; margin-top: 20px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .plate { padding: 10px; border: 1px solid #000; border-radius: 5px; cursor: pointer; font-size: 18px; }
+    .plate:hover { background-color: #f0f0f0; }
+    #timer { font-size: 20px; margin-top: 20px; }
+    #result { margin-top: 30px; font-size: 20px; }
+  </style>
+</head>
+<body>
+  <h1>车牌选号系统</h1>
+  <button onclick="startSelection()">开始选号</button>
+  <div id="timer"></div>
+  <div id="plates"></div>
+  <div id="result"></div>
+
+  <script>
+    const platesDiv = document.getElementById("plates");
+    const timerDiv = document.getElementById("timer");
+    const resultDiv = document.getElementById("result");
+    let plates = [];
+    let countdown;
+
+    function generatePlate() {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const letter = chars[Math.floor(Math.random() * chars.length)];
+      const digits = Math.floor(Math.random() * 1000000).toString().padStart(5, '0');
+      return `京${letter}${digits}`;
+    }
+
+    function generatePlates() {
+      plates = [];
+      while (plates.length < 50) {
+        let plate = generatePlate();
+        if (!plates.includes(plate)) plates.push(plate);
+      }
+    }
+
+    function startSelection() {
+      generatePlates();
+      platesDiv.innerHTML = "";
+      resultDiv.innerHTML = "";
+      plates.forEach(plate => {
+        const div = document.createElement("div");
+        div.className = "plate";
+        div.innerText = plate;
+        div.onclick = () => selectPlate(plate);
+        platesDiv.appendChild(div);
+      });
+      platesDiv.style.display = "grid";
+      startCountdown(20);
+    }
+
+    function startCountdown(seconds) {
+      let timeLeft = seconds;
+      timerDiv.innerText = `倒计时: ${timeLeft}秒`;
+      clearInterval(countdown);
+      countdown = setInterval(() => {
+        timeLeft--;
+        timerDiv.innerText = `倒计时: ${timeLeft}秒`;
+        if (timeLeft <= 0) {
+          clearInterval(countdown);
+          timerDiv.innerText = "时间到！";
+          disableSelection();
+        }
+      }, 1000);
+    }
+
+    function selectPlate(selected) {
+      clearInterval(countdown);
+      platesDiv.style.display = "none";
+      const goodPlates = plates.filter(p => /[A-Z][0-9]{3,5}[8]{1,}|[A-Z]{1}[8]{1,}[0-9]{3,}/.test(p) && p !== selected);
+      resultDiv.innerHTML = `<p>恭喜你选中 ${selected}</p><p>你错过的好号有：${goodPlates.join("、") || '无'}</p>`;
+    }
+
+    function disableSelection() {
+      platesDiv.querySelectorAll(".plate").forEach(p => p.onclick = null);
+    }
+  </script>
+</body>
+</html>
